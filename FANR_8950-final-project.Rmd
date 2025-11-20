@@ -1,0 +1,103 @@
+---
+title: "Final Project"
+author: "Heather Motro"
+date: "2025-11-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages, echo = FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(here)
+```
+
+```{r load data, include = FALSE}
+#The location I'm using is in upstate NY, near Allen Mountain. Fujacks Road, Newcomb, Essex County, NY, United States of America
+Bart_mass_04 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-04.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-04.basic.20241118T171259Z.csv")
+Bart_mass_05 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-05.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-05.basic.20241118T023817Z.csv")
+Bart_mass_06 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-06.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-06.basic.20241118T031958Z.csv")
+Bart_mass_07 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-07.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-07.basic.20241118T150320Z.csv")
+Bart_mass_09 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-09.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-09.basic.20241118T150721Z.csv")
+Bart_mass_10 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-10.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-10.basic.20241118T095547Z.csv")
+Bart_mass_11 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-11.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-11.basic.20241118T181203Z.csv")
+Bart_pertrap_04 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-04.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T171259Z.csv")
+Bart_pertrap_05 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-05.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T023817Z.csv")
+Bart_pertrap_06 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-06.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T031958Z.csv")
+Bart_pertrap_07 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-07.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T150320Z.csv")
+Bart_pertrap_09 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-09.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T150721Z.csv")
+Bart_pertrap_10 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-10.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T095547Z.csv")
+Bart_pertrap_11 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-11.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T181203Z.csv")
+```
+
+```{r join data, echo = FALSE}
+#getting all mass data into one df
+mass_all <- bind_rows(
+  Bart_mass_04, Bart_mass_05, Bart_mass_06, Bart_mass_07, Bart_mass_09, Bart_mass_10, Bart_mass_11) %>%
+  arrange(collectDate, weighDate, namedLocation, plotID, trapID, functionalGroup) %>%
+    select(weighDate, setDate, collectDate, ovenStartDate, ovenEndDate, plotID, trapID, sampleCondition, massSampleID, functionalGroup, dryMass, qaDryMass, remarks) #only keep meaningful columns
+
+
+#getting all trap data into one df
+trap_all <- bind_rows(Bart_pertrap_04, Bart_pertrap_05, Bart_pertrap_06, Bart_pertrap_07, Bart_pertrap_09, Bart_pertrap_10, Bart_pertrap_11) %>%
+  arrange(plotID, trapID) %>%
+  select(namedLocation, plotID, subplotID, trapID, decimalLatitude, decimalLongitude, elevation, nlcdClass, plotType, coordinateUncertainty, elevationUncertainty, date, targetTaxaPresent, trapType, trapPlacement, trapSize, remarks)
+
+#merging mass and trap dataframes
+mass_trap <- merge(mass_all, trap_all, by = "trapID") %>%
+  arrange(collectDate, trapID)
+
+#checking what data class each vector is
+str(mass_trap)
+
+#Adding new column that just shows month
+mass_trap$month <- as.numeric(format(mass_trap$collectDate, "%m"))
+
+#Ordering columns
+mass_trap <- mass_trap %>%
+  select(month, trapID, functionalGroup, nlcdClass, trapType, trapSize, dryMass, everything())
+```
+
+```{r time differences, echo = FALSE}
+#Length of time between setting trap and collecting litter
+mass_trap$accumulation_days <- as.numeric(mass_trap$collectDate - mass_trap$setDate)
+```
+
+```{r dry mass per days collected, echo = FALSE}
+#Creating a function that makes a new column for dry mass per days the trap collected litter
+mass_per_day <- function(mass_trap)
+  
+  
+```
+  #Getting confused here and will come back to this. This is what ChatGPT gave me but I want to change it:
+  
+calc_drymass_rate <- function(df) {
+  # Create a new column and fill it with NA
+  df$dryMass_per_day <- NA   #change this to 0 instead of NA? I think that's what we did in class
+  
+  # Loop through each row
+  for (i in 1:nrow(df)) {
+    if (!is.na(df$dryMass[i]) && 
+        !is.na(df$setDate[i]) && 
+        !is.na(df$collectDate[i])) {
+      
+      days_diff <- as.numeric(df$collectDate[i] - df$setDate[i])
+      
+      if (days_diff > 0) {
+        df$dryMass_per_day[i] <- df$dryMass[i] / days_diff
+      } else {
+        df$dryMass_per_day[i] <- NA
+      }
+    }
+  }
+  
+  return(df)
+}
+
+Notes for myself: Basically I just need a report that summarizes info in the dataset. I need "quantitative information summarizing information in the data set." I don't have to analyze it, I just have to showcase it and have it ready for future analyses. Pretend it's an end-of-season report. I am going to focus on: leaf litter per trap. 
