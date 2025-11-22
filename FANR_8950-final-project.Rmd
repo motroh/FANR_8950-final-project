@@ -72,8 +72,32 @@ mass_trap <- mass_trap %>%
 mass_trap$accumulation_days <- as.numeric(mass_trap$collectDate - mass_trap$setDate)
 ```
 
-```{r removing data where trap was not used, echo = FALSE}
-#Note to self Im coming back to this
+```{r cleaning up an outlier, include = FALSE}
+#Note: After putting everything in a table, I saw an unusually high mean and wanted to go back and check it.
+
+october_leaves_dryMass <- mass_trap %>%
+  filter(month == 10, functionalGroup == "Leaves") %>%
+  arrange(desc(dryMass))
+
+head(october_leaves_dryMass)
+
+mass_trap %>% filter(dryMass > 0.99) %>% arrange(desc(dryMass)) %>% select(dryMass, month, functionalGroup, accumulation_days)
+
+#After viewing, I suspected this was recorded in the wrong units as all values were in the tens rather than the tenths/hundreths as other values. But then I thought about the context - maybe it would make sense for there to be a lot more leaf litter collected in October.
+```
+
+```{r unused cleaning, eval = FALSE}
+#Just saving this here in case I want to use it.
+#Correcting
+mass_trap <- mass_trap %>% 
+  mutate(
+    dryMass_clean =
+    ifelse(month == 10 & functionalGroup == "Leaves", dryMass / 1000, dryMass)
+  )
+
+mass_trap %>%
+  filter(month == 10, functionalGroup == "Leaves") %>% select(dryMass_clean) %>%
+           arrange(desc(dryMass_clean))
 ```
 
 ```{r dry mass per days collected, echo = FALSE}
@@ -122,6 +146,6 @@ month_data %>%
   print()}
 
 ```
-NEXT STEPS FOR THIS: RENAME COLUMNS, RENAME MONTHS, GET ALL INTO ONE TABLE, AND WHY DOES IT SAY "3" AFTER EACH MONTH? ALSO COMMIT.
+
 
 Notes for myself: Basically I just need a report that summarizes info in the dataset. I need "quantitative information summarizing information in the data set." I don't have to analyze it, I just have to showcase it and have it ready for future analyses. Pretend it's an end-of-season report. I am going to focus on: leaf litter per trap.
