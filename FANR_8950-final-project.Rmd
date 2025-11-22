@@ -119,9 +119,12 @@ month_summary <- mass_trap %>%
   group_by(month, functionalGroup) %>%
   summarize(mean_dryMass_per_day = mean(dryMass_per_day, na.rm = T))
 
+#Renaming month numbers to month names
+month_summary <- month_summary %>% mutate(month_name = month.name[month])
+
 #Creating nest
 month_summary_nest <- month_summary %>%
-  group_by(month) %>%
+  group_by(month_name) %>%
   nest()
 
 #Reorder by functional group with decreasing mean
@@ -131,9 +134,6 @@ month_summary_nest <- month_summary_nest %>%
                  mutate(functionalGroup = fct_reorder(functionalGroup, mean_dryMass_per_day, .desc = T)))
   )
 #Note to self: 'map' works like 'across' for a nest. 'data' is from the nest. It contains all the tibbles. '~.x' is a placeholder for each nested tibble
-
-#Renaming month numbers to month names
-month_summary_nest <- month_summary_nest %>% mutate(month_name = month.name[month])
 
 #Using for loop to turn this into a table
 n_months <- nrow(month_summary_nest)  #AI Assistance: I wasn't sure how to get started on this, ChatGPT suggested I start by creating a separate df with the number of months for the loop to work with.
@@ -147,5 +147,14 @@ month_data %>%
 
 ```
 
+```{r plots, echo = FALSE}
+ggplot(month_summary,
+       aes(x = month_name, y = mean_dryMass_per_day, color = functionalGroup, group = functionalGroup)) +
+  geom_point() +
+  geom_line()
+  labs(x = "Month", y = "Mean dry litter mass (g/day)", color = "Litter Source Functional Group", title = "Daily Litterfall Accumulation in Bartlett Experimental Forest")
+  
+
+```
 
 Notes for myself: Basically I just need a report that summarizes info in the dataset. I need "quantitative information summarizing information in the data set." I don't have to analyze it, I just have to showcase it and have it ready for future analyses. Pretend it's an end-of-season report. I am going to focus on: leaf litter per trap.
