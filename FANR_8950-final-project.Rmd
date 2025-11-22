@@ -15,6 +15,7 @@ library(ggplot2)
 library(dplyr)
 library(stringr)
 library(lubridate)
+library(knitr)
 library(here)
 ```
 
@@ -34,6 +35,8 @@ Bart_pertrap_07 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950-fin
 Bart_pertrap_09 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-09.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T150721Z.csv")
 Bart_pertrap_10 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-10.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T095547Z.csv")
 Bart_pertrap_11 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-11.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_pertrap.basic.20241118T181203Z.csv")
+head(Bart_mass_04)
+head(Bart_pertrap_04)
 ```
 
 ```{r join data, echo = FALSE}
@@ -69,35 +72,56 @@ mass_trap <- mass_trap %>%
 mass_trap$accumulation_days <- as.numeric(mass_trap$collectDate - mass_trap$setDate)
 ```
 
+```{r removing data where trap was not used, echo = FALSE}
+#Note to self Im coming back to this
+```
+
 ```{r dry mass per days collected, echo = FALSE}
 #Creating a function that makes a new column for dry mass per days the trap collected litter
-mass_per_day <- function(mass_trap)
-  
-  
-```
-  #Getting confused here and will come back to this. This is what ChatGPT gave me but I want to change it:
-  
-calc_drymass_rate <- function(df) {
-  # Create a new column and fill it with NA
-  df$dryMass_per_day <- NA   #change this to 0 instead of NA? I think that's what we did in class
-  
-  # Loop through each row
-  for (i in 1:nrow(df)) {
-    if (!is.na(df$dryMass[i]) && 
-        !is.na(df$setDate[i]) && 
-        !is.na(df$collectDate[i])) {
-      
-      days_diff <- as.numeric(df$collectDate[i] - df$setDate[i])
-      
-      if (days_diff > 0) {
-        df$dryMass_per_day[i] <- df$dryMass[i] / days_diff
-      } else {
-        df$dryMass_per_day[i] <- NA
-      }
-    }
-  }
-  
-  return(df)
+calc_drymass_rate <- function(placeholder) { #Note to self: fill in any df for 'placeholder'
+  placeholder %>%
+    mutate(dryMass_per_day = ifelse(is.na(accumulation_days) | accumulation_days == 0, NA, dryMass / accumulation_days))
 }
+ #Note to self: ifelse ensures that I don't divide when there are 0 accumulation days or accumulation day is NA. I don't see that anywhere in the data, but just in case.
+  
+#Run the function 
+mass_trap <- calc_drymass_rate(mass_trap)
+head(mass_trap$dryMass_per_day) #note to self: This is litter accumulation in g/day
 
-Notes for myself: Basically I just need a report that summarizes info in the dataset. I need "quantitative information summarizing information in the data set." I don't have to analyze it, I just have to showcase it and have it ready for future analyses. Pretend it's an end-of-season report. I am going to focus on: leaf litter per trap. 
+```
+
+```{r summary dry mass per day per month, echo = FALSE}
+month_summary <- mass_trap %>%
+  group_by(month, functionalGroup) %>%
+  summarize(mean_dryMass_per_day = mean(dryMass_per_day, na.rm = T))
+
+#Creating nest
+month_summary_nest <- month_summary %>%
+  group_by(month) %>%
+  nest()
+
+#Reorder by functional group with decreasing mean
+month_summary_nest <- month_summary_nest %>%
+  mutate(
+    data = map(data, ~ .x %>%
+                 mutate(functionalGroup = fct_reorder(functionalGroup, mean_dryMass_per_day, .desc = T)))
+  )
+#Note to self: 'map' works like 'across' for a nest. 'data' is from the nest. It contains all the tibbles. '~.x' is a placeholder for each nested tibble
+
+#Renaming month numbers to month names
+month_summary_nest <- month_summary_nest %>% mutate(month_name = month.name[month])
+
+#Using for loop to turn this into a table
+n_months <- nrow(month_summary_nest)  #AI Assistance: I wasn't sure how to get started on this, ChatGPT suggested I start by creating a separate df with the number of months for the loop to work with.
+for (i in 1:n_months){
+  month_data <- month_summary_nest$data[[i]] %>%
+    arrange(desc(mean_dryMass_per_day))
+month_data %>%
+  select('Litter Source Functional Group' = functionalGroup, 'Mean Litter Mass Accumulated (g/day)' = mean_dryMass_per_day) %>%
+  kable(caption = paste("Mean Litterfall (g/day)", month_summary_nest$month_name[i])) %>% 
+  print()}
+
+```
+NEXT STEPS FOR THIS: RENAME COLUMNS, RENAME MONTHS, GET ALL INTO ONE TABLE, AND WHY DOES IT SAY "3" AFTER EACH MONTH? ALSO COMMIT.
+
+Notes for myself: Basically I just need a report that summarizes info in the dataset. I need "quantitative information summarizing information in the data set." I don't have to analyze it, I just have to showcase it and have it ready for future analyses. Pretend it's an end-of-season report. I am going to focus on: leaf litter per trap.
