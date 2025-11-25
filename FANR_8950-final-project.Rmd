@@ -5,11 +5,11 @@ date: "2025-11-06"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r load packages, echo = FALSE}
+```{r load packages, echo = FALSE, include = FALSE}
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
@@ -19,7 +19,7 @@ library(knitr)
 library(here)
 ```
 
-```{r load data, include = FALSE}
+```{r load data, include = FALSE, echo = FALSE}
 #The location I'm using is in upstate NY, near Allen Mountain. Fujacks Road, Newcomb, Essex County, NY, United States of America
 Bart_mass_04 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-04.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-04.basic.20241118T171259Z.csv")
 Bart_mass_05 <- read_csv("C:/Users/hmotr/OneDrive/Documents/UGA/FANR_8950-final-project/NEON_litterfall/NEON.D01.BART.DP1.10033.001.2016-05.basic.20250129T000730Z.RELEASE-2025/NEON.D01.BART.DP1.10033.001.ltr_massdata.2016-05.basic.20241118T023817Z.csv")
@@ -55,10 +55,13 @@ trap_all <- bind_rows(Bart_pertrap_04, Bart_pertrap_05, Bart_pertrap_06, Bart_pe
 #merging mass and trap dataframes
 mass_trap <- merge(mass_all, trap_all, by = "trapID") %>%
   arrange(collectDate, trapID)
-
+```
+```{r I dont want this to show up, echo = FALSE, include = FALSE}
 #checking what data class each vector is
 str(mass_trap)
+```
 
+```{r join data cont, echo = FALSE}
 #Adding new column that just shows month
 mass_trap$month <- as.numeric(format(mass_trap$collectDate, "%m"))
 
@@ -86,7 +89,7 @@ mass_trap %>% filter(dryMass > 0.99) %>% arrange(desc(dryMass)) %>% select(dryMa
 #After viewing, I suspected this was recorded in the wrong units as all values were in the tens rather than the tenths/hundreths as other values. But then I thought about the context - maybe it would make sense for there to be a lot more leaf litter collected in October.
 ```
 
-```{r unused cleaning, eval = FALSE}
+```{r unused cleaning, eval = FALSE, include = FALSE}
 #Just saving this here in case I want to use it.
 #Correcting
 mass_trap <- mass_trap %>% 
@@ -100,7 +103,7 @@ mass_trap %>%
            arrange(desc(dryMass_clean))
 ```
 
-```{r dry mass per days collected, echo = FALSE}
+```{r dry mass per days collected, echo = FALSE, include = FALSE}
 #Creating a function that makes a new column for dry mass per days the trap collected litter
 calc_drymass_rate <- function(placeholder) { #Note to self: fill in any df for 'placeholder'
   placeholder %>%
@@ -117,7 +120,7 @@ head(mass_trap$dryMass_per_day) #note to self: This is litter accumulation in g/
 ```{r summary dry mass per day per month, echo = FALSE}
 month_summary <- mass_trap %>%
   group_by(month, functionalGroup) %>%
-  summarize(mean_dryMass_per_day = mean(dryMass_per_day, na.rm = T))
+  summarize(mean_dryMass_per_day = mean(dryMass_per_day, na.rm = T), .groups = "drop") #AI Assistance: Looked up how to remove a "summarize" message from HTML doc, it suggested .groups = "drop"
 
 #Renaming month numbers to month names
 month_summary <- month_summary %>% 
@@ -126,7 +129,6 @@ month_summary <- month_summary %>%
 #Converting to ordered factor
 month_summary <- month_summary %>%
   mutate(month_name = factor(month_name, levels = month.name))
-
 
 #Creating nest
 month_summary_nest <- month_summary %>%
@@ -153,6 +155,24 @@ month_data %>%
 
 ```
 
+```{r standard deviation, echo = FALSE}
+month_summary_sd <- mass_trap %>%
+  group_by(month, functionalGroup) %>%
+  summarize(
+    mean_dryMass_per_day = mean(dryMass_per_day, na.rm = TRUE),
+    sd_dryMass_per_day = sd(dryMass_per_day, na.rm = TRUE),
+    n = n(), .groups = "drop") %>% 
+  mutate(month_name = factor(month.name[month], levels = month.name)) #Had to create the ordered factor again
+
+month_summary_sd %>%
+  select(Month = month_name, Functional_Group = functionalGroup,
+         Mean_dryMass_per_day = mean_dryMass_per_day,
+         SD_dryMass_per_day = sd_dryMass_per_day,
+         n) %>%
+  kable(caption = "Mean and Standard Deviation of Daily Litterfall per Month and Functional Group",
+        digits = 3)
+```
+
 ```{r plots, echo = FALSE}
 library(RColorBrewer)
 
@@ -165,18 +185,42 @@ scale_fill_brewer(palette = "Dark2") +
        y = "Mean dry litter mass (g/day)",
        fill = "Litter Source")
 
-#Replicating plot without the October outlier
+#standard error plot
+
+ggplot(month_summary_sd, aes(x = month_name, y = sd_dryMass_per_day, color = functionalGroup, group = functionalGroup)) +
+  geom_point(size = 2) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = "Monthly Standard Deviation of Daily Litterfall",
+       x = "Month",
+       y = "SD of dry litter mass (g/day)",
+       color = "Functional Group")
+
+#Replicating plots without the October outlier
 
 month_summary_no_outlier <- month_summary %>%
   filter(!(month == 10 & mean_dryMass_per_day > 0.99))
+month_summary_no_outlier <- month_summary_no_outlier %>%
+  filter(!(month == 11 & mean_dryMass_per_day > 0.8))
+
+month_summary_sd_no_outlier <- month_summary_sd %>%
+  filter(!(month == 10 & mean_dryMass_per_day > 0.99))
+month_summary_sd_no_outlier <- month_summary_sd_no_outlier %>%
+  filter(!(month == 11 & mean_dryMass_per_day > 0.8))
   
 ggplot(month_summary_no_outlier,
        aes(x = month_name, y = mean_dryMass_per_day, fill = functionalGroup, group = functionalGroup)) +
   geom_bar(stat= "identity", position = "dodge") +
   scale_fill_brewer(palette = "Dark2")  +
-  labs(x = "Month", y = "Mean dry litter mass (g/day)", fill = "Litter Source", title = "Daily Litterfall Accumulation in Bartlett Experimental Forest, 2016", subtitle = "October high leaf-fall outlier removed")
+  labs(x = "Month", y = "Mean dry litter mass (g/day)", fill = "Litter Source", title = "Daily Litterfall Accumulation in Bartlett Experimental Forest, 2016, outliers excluded", subtitle = "Outliers from high autumn leaf fall excluded", caption = "Outliers: October Leaves 3.41 g/day, November Leaves 0.82 g/day")
 
 
+ggplot(month_summary_sd_no_outlier, aes(x = month_name, y = sd_dryMass_per_day, color = functionalGroup, group = functionalGroup)) +
+  geom_point(size = 2) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = "Monthly Standard Deviation of Daily Litterfall, outliers excluded",
+       x = "Month",
+       y = "SD of dry litter mass (g/day)",
+       color = "Functional Group", subtitle = "Outliers from high autumn leaf fall excluded")
 ```
 
 Notes for myself: Basically I just need a report that summarizes info in the dataset. I need "quantitative information summarizing information in the data set." I don't have to analyze it, I just have to showcase it and have it ready for future analyses. Pretend it's an end-of-season report. I am going to focus on: leaf litter per trap.
