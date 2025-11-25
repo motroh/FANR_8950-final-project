@@ -120,7 +120,13 @@ month_summary <- mass_trap %>%
   summarize(mean_dryMass_per_day = mean(dryMass_per_day, na.rm = T))
 
 #Renaming month numbers to month names
-month_summary <- month_summary %>% mutate(month_name = month.name[month])
+month_summary <- month_summary %>% 
+  mutate(month_name = month.name[month])
+
+#Converting to ordered factor
+month_summary <- month_summary %>%
+  mutate(month_name = factor(month_name, levels = month.name))
+
 
 #Creating nest
 month_summary_nest <- month_summary %>%
@@ -148,12 +154,28 @@ month_data %>%
 ```
 
 ```{r plots, echo = FALSE}
+library(RColorBrewer)
+
 ggplot(month_summary,
-       aes(x = month_name, y = mean_dryMass_per_day, color = functionalGroup, group = functionalGroup)) +
-  geom_point() +
-  geom_line()
-  labs(x = "Month", y = "Mean dry litter mass (g/day)", color = "Litter Source Functional Group", title = "Daily Litterfall Accumulation in Bartlett Experimental Forest")
+       aes(x = month_name, y = mean_dryMass_per_day, fill = functionalGroup)) +
+  geom_bar(stat = "identity", position = "dodge") +
+scale_fill_brewer(palette = "Dark2") +
+  labs(title = "Daily Litterfall Accumulation in Bartlett Experimental Forest, 2016",
+       x = "Month",
+       y = "Mean dry litter mass (g/day)",
+       fill = "Litter Source")
+
+#Replicating plot without the October outlier
+
+month_summary_no_outlier <- month_summary %>%
+  filter(!(month == 10 & mean_dryMass_per_day > 0.99))
   
+ggplot(month_summary_no_outlier,
+       aes(x = month_name, y = mean_dryMass_per_day, fill = functionalGroup, group = functionalGroup)) +
+  geom_bar(stat= "identity", position = "dodge") +
+  scale_fill_brewer(palette = "Dark2")  +
+  labs(x = "Month", y = "Mean dry litter mass (g/day)", fill = "Litter Source", title = "Daily Litterfall Accumulation in Bartlett Experimental Forest, 2016", subtitle = "October high leaf-fall outlier removed")
+
 
 ```
 
