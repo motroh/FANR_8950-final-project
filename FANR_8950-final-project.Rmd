@@ -165,12 +165,17 @@ month_summary_sd <- mass_trap %>%
   mutate(month_name = factor(month.name[month], levels = month.name)) #Had to create the ordered factor again
 
 month_summary_sd %>%
-  select(Month = month_name, Functional_Group = functionalGroup,
-         Mean_dryMass_per_day = mean_dryMass_per_day,
-         SD_dryMass_per_day = sd_dryMass_per_day,
-         n) %>%
-  kable(caption = "Mean and Standard Deviation of Daily Litterfall per Month and Functional Group",
-        digits = 3)
+  select(
+    Month = month_name,
+    `Litter Source` = functionalGroup,
+    'Mean Dry Mass per Day' = mean_dryMass_per_day,
+    'Standard Deviation' = sd_dryMass_per_day,
+    n
+  ) %>%
+  kable(
+    caption = "Monthly Standard Deviation and Mean Daily Litterfall by Functional Group",
+    digits = 3
+  )
 ```
 
 ```{r plots, echo = FALSE}
@@ -187,9 +192,15 @@ scale_fill_brewer(palette = "Dark2") +
 
 #standard error plot
 
-ggplot(month_summary_sd, aes(x = month_name, y = sd_dryMass_per_day, color = functionalGroup, group = functionalGroup)) +
-  geom_point(size = 2) +
+ggplot(month_summary_sd,
+       aes(x = month_name,
+           y = sd_dryMass_per_day,
+           color = functionalGroup,
+           group = functionalGroup,
+           size = sd_dryMass_per_day)) +
+  geom_point(alpha = 0.7) +
   scale_color_brewer(palette = "Dark2") +
+  scale_size_continuous(range = c(2, 12), guide = "none") +
   labs(title = "Monthly Standard Deviation of Daily Litterfall",
        x = "Month",
        y = "SD of dry litter mass (g/day)",
@@ -214,9 +225,15 @@ ggplot(month_summary_no_outlier,
   labs(x = "Month", y = "Mean dry litter mass (g/day)", fill = "Litter Source", title = "Daily Litterfall Accumulation in Bartlett Experimental Forest, 2016, outliers excluded", subtitle = "Outliers from high autumn leaf fall excluded", caption = "Outliers: October Leaves 3.41 g/day, November Leaves 0.82 g/day")
 
 
-ggplot(month_summary_sd_no_outlier, aes(x = month_name, y = sd_dryMass_per_day, color = functionalGroup, group = functionalGroup)) +
-  geom_point(size = 2) +
+ggplot(month_summary_sd_no_outlier,
+       aes(x = month_name,
+           y = sd_dryMass_per_day,
+           color = functionalGroup,
+           group = functionalGroup,
+           size = sd_dryMass_per_day)) +
+  geom_point(alpha = 0.7) +
   scale_color_brewer(palette = "Dark2") +
+  scale_size_continuous(range = c(2, 12), guide = "none") +   # adjust dot size range
   labs(title = "Monthly Standard Deviation of Daily Litterfall, outliers excluded",
        x = "Month",
        y = "SD of dry litter mass (g/day)",
