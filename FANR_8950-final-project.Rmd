@@ -116,7 +116,7 @@ head(mass_trap$dryMass_per_day) #note to self: This is litter accumulation in g/
 
 ```
 ## Data Summary
-```{r summary dry mass per day per month, echo = FALSE}
+```{r summary dry mass per day per month, echo = FALSE, message = FALSE, warning = FALSE, comment = NA}
 month_summary <- mass_trap %>%
   group_by(month, functionalGroup) %>%
   summarize(mean_dryMass_per_day = mean(dryMass_per_day, na.rm = T), .groups = "drop") #AI Assistance: Looked up how to remove a "summarize" message from HTML doc, it suggested .groups = "drop"
@@ -147,10 +147,9 @@ n_months <- nrow(month_summary_nest)  #AI Assistance: I wasn't sure how to get s
 for (i in 1:n_months){
   month_data <- month_summary_nest$data[[i]] %>%
     arrange(desc(mean_dryMass_per_day))
-month_data %>%
+print(month_data %>%
   select('Litter Source Functional Group' = functionalGroup, 'Mean Litter Mass Accumulated (g/day)' = mean_dryMass_per_day) %>%
-  kable(caption = paste("Mean Litterfall (g/day)", month_summary_nest$month_name[i])) %>% 
-  print()}
+  kable(caption = paste("Mean Litterfall (g/day)", month_summary_nest$month_name[i])))}
 
 ```
 
@@ -203,7 +202,7 @@ ggplot(month_summary_sd,
   labs(title = "Monthly Standard Deviation of Daily Litterfall",
        x = "Month",
        y = "SD of dry litter mass (g/day)",
-       color = "Functional Group")
+       color = "Litter Source")
 
 #Replicating plots without the October outlier
 
@@ -236,21 +235,25 @@ ggplot(month_summary_sd_no_outlier,
   labs(title = "Monthly Standard Deviation of Daily Litterfall, outliers excluded",
        x = "Month",
        y = "SD of dry litter mass (g/day)",
-       color = "Functional Group", subtitle = "Outliers from high autumn leaf fall excluded")
+       color = "Litter Source", subtitle = "Outliers from high autumn leaf fall excluded")
 ```
+
+
 ## Takeaways
 
-##### Leaves appear to make up the bulk of litter in October and November, with needles, twigs/branches, and other(unspecified) dominating the rest of the year.
+#### Leaves appear to make up the bulk of litter in autumn months, with needles, twigs/branches, and other(unspecified) dominating the rest of the year.
 
 #### *Ideas for future analyses*: The data should be further analyzed using a mixed-effects model with dry mass per day as a continuous repsonse variable and month and litter source functional group as fixed effects. A mixed-effects model will indicate significant trends in litter accumulation in month and litter source.
 
 #### *Next steps*: This data analysis and report can be used to understand litterfall trends in Bartlett Experimental Forest, to inform foresters on the health and productivity of trees, the availability of habitat and soil organic matter, and how to prevent/manage fire. 
-#### However, this report presents only a brief summary of mean monthly litter accumulation for one year at one site. The NEON dataset spans eight years (2016-2023) and 34 sites. Performing the same analyses done here while including all sites and all years would aid an overall understanding in litterfall trends in forests across the U.S., which could give powerful insight into the effects of climate change on trees.
 
 #### *Suggestions for data improvement*: Specifying what species litter comes from would allow for greater insight into litter trends. Since the litter in each trap is already sorted into functional group, it would be simple, albeit time-consuming for the technician, to identify the species of each component.
 
-#### *Considerations*: It should be noted that this report analyzes dry mass (g), not relative abundance, of each litter source. The sources that appear to make up a greater amount of the mass of each 
+#### *Considerations*: It should be noted that this report analyzes dry mass (g), not relative abundance, of each litter source. The sources that appear to make up a greater amount of the mass of each month may just have larger mass, rather than be present in larger quantity.
+#### This report presents only a brief summary of mean monthly litter accumulation for one year at one site. The NEON dataset spans eight years (2016-2023) and 34 sites. Performing the same analyses done here while including all sites and all years would aid an overall understanding in litterfall trends in forests across the U.S., which could give powerful insight into the effects of climate change on trees.
 
 
+#### *Data source*: 
+#### NEON (National Ecological Observatory Network). Litterfall and fine woody debris production and chemistry (DP1.10033.001), RELEASE-2025. https://doi.org/10.48443/11hx-c586. Dataset accessed from https://data.neonscience.org/data-products/DP1.10033.001/RELEASE-2025 on November 26, 2025.
 
 
